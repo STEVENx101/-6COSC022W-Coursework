@@ -1,8 +1,9 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const db = require("../config/db");
-
 const crypto = require("crypto");
+const db = require("../config/db");
+const sendEmail = require("../utils/sendEmail");
+
 
 exports.registerUser = async (req, res) => {
   try {
@@ -102,6 +103,105 @@ exports.verifyEmail = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.send("<h2>Server error</h2>");
+  }
+};
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const [rows] = await db.query(
+      "SELECT id, email FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = rows[0];
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = Date.now() + 10 * 60 * 1000;
+
+    await db.query(
+      "DELETE FROM password_reset_tokens WHERE user_id = ?",
+      [user.id]
+    );
+
+    await db.query(
+      "INSERT INTO password_reset_tokens (user_id, token, expires) VALUES (?, ?, ?)",
+      [user.id, token, expires]
+    );
+
+    const resetLink = `${process.env.CLIENT_URL}/reset-password.html?token=${token}`;
+
+    await sendEmail(
+      user.email,
+      "Password Reset Request",
+      `
+        <h2>Password Reset</h2>
+        <p>Click the link below to reset your password:</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>This link expires in 10 minutes.</p>
+      `
+    );
+
+    res.json({
+      message: "Password reset link sent to email"
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        message: "Token and new password are required"
+      });
+    }
+
+    const [rows] = await db.query(
+      "SELECT * FROM password_reset_tokens WHERE token = ?",
+      [token]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({ message: "Invalid token" });
+    }
+
+    const record = rows[0];
+
+    if (record.expires < Date.now()) {
+      return res.status(400).json({ message: "Token expired" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await db.query(
+      "UPDATE users SET password = ? WHERE id = ?",
+      [hashedPassword, record.user_id]
+    );
+
+    await db.query(
+      "DELETE FROM password_reset_tokens WHERE user_id = ?",
+      [record.user_id]
+    );
+
+    res.json({ message: "Password reset successful" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
