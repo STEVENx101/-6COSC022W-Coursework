@@ -13,7 +13,7 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ message: "All fields required" });
     }
 
-    if (!email.endsWith("@westminster.ac.uk")) {
+    if (!email.endsWith("@my.westminster.ac.uk")) {
       return res.status(400).json({
         message: "Must use university email"
       });
