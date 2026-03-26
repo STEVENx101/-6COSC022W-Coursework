@@ -15,6 +15,11 @@
 
   <p id="result"></p>
 
+  <div id="verifyBox" style="display:none;">
+    <p>Click below to verify your email:</p>
+    <a id="verifyLink" target="_blank">Verify Email</a>
+  </div>
+
   <script>
     const form = document.getElementById("registerForm");
 
@@ -35,6 +40,14 @@
       const data = await res.json();
 
       document.getElementById("result").innerText = data.message;
+
+      if (data.verificationLink) {
+        document.getElementById("verifyBox").style.display = "block";
+
+        const link = document.getElementById("verifyLink");
+        link.href = data.verificationLink;
+        link.innerText = data.verificationLink;
+      }
     });
   </script>
 

@@ -49,7 +49,7 @@ exports.registerUser = async (req, res) => {
 
     res.status(201).json({
       message: "User registered. Please verify email.",
-      verificationLink: `http://localhost:5000/api/auth/verify/${token}`
+      verificationLink: `http://localhost:3000/api/auth/verify/${token}`
     });
 
   } catch (err) {
@@ -69,13 +69,13 @@ exports.verifyEmail = async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return res.status(400).json({ message: "Invalid token" });
+      return res.send("<h2>Invalid token</h2>");
     }
 
     const record = rows[0];
 
     if (record.expires < Date.now()) {
-      return res.status(400).json({ message: "Token expired" });
+      return res.send("<h2>Token expired</h2>");
     }
 
     await db.query(
@@ -88,11 +88,20 @@ exports.verifyEmail = async (req, res) => {
       [record.user_id]
     );
 
-    res.json({ message: "Email verified successfully" });
+    // 🔥 REDIRECT TO LOGIN PAGE
+    res.send(`
+      <h2>Email verified successfully</h2>
+      <p>Redirecting to login...</p>
+      <script>
+        setTimeout(() => {
+          window.location.href = "/login.html";
+        }, 2000);
+      </script>
+    `);
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.send("<h2>Server error</h2>");
   }
 };
 
