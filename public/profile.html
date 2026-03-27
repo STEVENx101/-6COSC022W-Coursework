@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Profile</title>
+</head>
+<body>
+  <h2>My Profile</h2>
+
+  <form id="profileForm">
+    <input type="text" id="full_name" placeholder="Full Name" /><br><br>
+    <textarea id="bio" placeholder="Bio"></textarea><br><br>
+    <input type="text" id="profile_image" placeholder="Profile Image URL or file name" /><br><br>
+    <button type="submit">Save Profile</button>
+  </form>
+
+  <button id="loadProfile">Load My Profile</button>
+
+  <p id="result"></p>
+
+  <script>
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      window.location.href = "/login.html";
+    }
+
+    document.getElementById("profileForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const full_name = document.getElementById("full_name").value;
+      const bio = document.getElementById("bio").value;
+      const profile_image = document.getElementById("profile_image").value;
+
+      let res = await fetch("/api/profile/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({ full_name, bio, profile_image })
+      });
+
+      if (res.status === 404) {
+        res = await fetch("/api/profile", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({ full_name, bio, profile_image })
+        });
+      }
+
+      const data = await res.json();
+      document.getElementById("result").innerText = data.message || "Done";
+    });
+
+    document.getElementById("loadProfile").addEventListener("click", async () => {
+      const res = await fetch("/api/profile/me", {
+        method: "GET",
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        document.getElementById("full_name").value = data.full_name || "";
+        document.getElementById("bio").value = data.bio || "";
+        document.getElementById("profile_image").value = data.profile_image || "";
+        document.getElementById("result").innerText = "Profile loaded";
+      } else {
+        document.getElementById("result").innerText = data.message || "Failed";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const path = require("path");
+const profileRoutes = require("./src/routes/profileRoutes");
 
 const authRoutes = require("./src/routes/authRoutes");
 
@@ -23,6 +24,7 @@ app.use(helmet({
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/profile", profileRoutes);
 
 app.get("/", (req, res) => {
   res.redirect("/login.html");

@@ -89,7 +89,6 @@ exports.verifyEmail = async (req, res) => {
       [record.user_id]
     );
 
-    // 🔥 REDIRECT TO LOGIN PAGE
     res.send(`
       <h2>Email verified successfully</h2>
       <p>Redirecting to login...</p>
@@ -150,6 +149,7 @@ exports.forgotPassword = async (req, res) => {
         <p>This link expires in 10 minutes.</p>
       `
     );
+    
 
     res.json({
       message: "Password reset link sent to email"
