@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { User, VerificationToken, PasswordResetToken } = require("../models");
+const sendEmail = require("../utils/sendEmail");
 
 exports.registerUser = async (req, res) => {
   try {
@@ -107,6 +108,107 @@ exports.loginUser = async (req, res) => {
     );
 
     res.json({ message: "Login successful", token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({
+      where: { email }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = Date.now() + 10 * 60 * 1000;
+
+    await PasswordResetToken.destroy({
+      where: { user_id: user.id }
+    });
+
+    await PasswordResetToken.create({
+      user_id: user.id,
+      token,
+      expires
+    });
+
+    const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
+
+    try {
+      await sendEmail(
+        user.email,
+        "Password Reset Request",
+        `
+          <h2>Password Reset</h2>
+          <p>Click the link below to reset your password:</p>
+          <a href="${resetLink}">${resetLink}</a>
+          <p>This link expires in 10 minutes.</p>
+        `
+      );
+    } catch (mailErr) {
+      console.error("Mail error:", mailErr.message);
+
+      return res.json({
+        message: "Reset token generated but email could not be sent",
+        resetLink
+      });
+    }
+
+    res.json({
+      message: "Password reset link sent to email"
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        message: "Token and new password are required"
+      });
+    }
+
+    const record = await PasswordResetToken.findOne({
+      where: { token }
+    });
+
+    if (!record) {
+      return res.status(400).json({ message: "Invalid token" });
+    }
+
+    if (record.expires < Date.now()) {
+      return res.status(400).json({ message: "Token expired" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await User.update(
+      { password: hashedPassword },
+      { where: { id: record.user_id } }
+    );
+
+    await PasswordResetToken.destroy({
+      where: { user_id: record.user_id }
+    });
+
+    res.json({ message: "Password reset successful" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
