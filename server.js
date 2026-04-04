@@ -30,6 +30,7 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/bids", bidRoutes);
 
 
+
 app.get("/health", (req, res) => {
   res.json({ message: "Server is running" });
 });

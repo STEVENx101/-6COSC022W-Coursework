@@ -1,3 +1,4 @@
+const path = require("path");
 const swaggerJSDoc = require("swagger-jsdoc");
 
 const options = {
@@ -89,6 +90,10 @@ const options = {
             profile_image: {
               type: "string",
               example: "profile.jpg"
+            },
+            linkedin_url: {
+              type: "string",
+              example: "https://www.linkedin.com/in/januda"
             }
           }
         },
@@ -125,11 +130,102 @@ const options = {
               example: "PENDING"
             }
           }
+        },
+        DegreeRequest: {
+          type: "object",
+          properties: {
+            degree_name: {
+              type: "string",
+              example: "BSc Software Engineering"
+            },
+            institution: {
+              type: "string",
+              example: "University of Westminster"
+            },
+            year: {
+              type: "integer",
+              example: 2025
+            }
+          }
+        },
+        CertificationRequest: {
+          type: "object",
+          properties: {
+            title: {
+              type: "string",
+              example: "AWS Cloud Practitioner"
+            },
+            organization: {
+              type: "string",
+              example: "Amazon"
+            },
+            year: {
+              type: "integer",
+              example: 2025
+            }
+          }
+        },
+        LicenceRequest: {
+          type: "object",
+          properties: {
+            title: {
+              type: "string",
+              example: "Driving Licence"
+            },
+            issuer: {
+              type: "string",
+              example: "Department of Motor Traffic"
+            },
+            year: {
+              type: "integer",
+              example: 2024
+            }
+          }
+        },
+        CourseRequest: {
+          type: "object",
+          properties: {
+            course_name: {
+              type: "string",
+              example: "Node.js Fundamentals"
+            },
+            provider: {
+              type: "string",
+              example: "Coursera"
+            },
+            year: {
+              type: "integer",
+              example: 2025
+            }
+          }
+        },
+        EmploymentRequest: {
+          type: "object",
+          properties: {
+            company: {
+              type: "string",
+              example: "Fintrex"
+            },
+            role: {
+              type: "string",
+              example: "Software Developer"
+            },
+            start_date: {
+              type: "string",
+              format: "date",
+              example: "2025-01-01"
+            },
+            end_date: {
+              type: "string",
+              format: "date",
+              example: "2026-01-01"
+            }
+          }
         }
       }
     }
   },
-  apis: ["./routes/*.js"]
+  apis: [path.join(__dirname, "../routes/*.js")]
 };
 
 const swaggerSpec = swaggerJSDoc(options);

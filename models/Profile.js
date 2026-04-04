@@ -13,6 +13,10 @@ const Profile = sequelize.define("Profile", {
   profile_image: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  linkedin_url: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   tableName: "profiles",
