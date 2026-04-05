@@ -9,7 +9,9 @@ const Certification = require("./Certification");
 const Licence = require("./Licence");
 const Course = require("./Course");
 const EmploymentHistory = require("./EmploymentHistory");
-
+const InfluencerDay = require("./InfluencerDay");
+const ApiKey = require("./ApiKey");
+const BlacklistedToken = require("./BlacklistedToken");
 
 // Associations
 User.hasOne(Profile, {foreignKey: "user_id", onDelete: "CASCADE"});
@@ -40,6 +42,12 @@ Course.belongsTo(User, {foreignKey: "user_id"});
 User.hasMany(EmploymentHistory, {foreignKey: "user_id", onDelete: "CASCADE"});
 EmploymentHistory.belongsTo(User, {foreignKey: "user_id"});
 
+User.hasMany(InfluencerDay, { foreignKey: "user_id", onDelete: "CASCADE" });
+InfluencerDay.belongsTo(User, { foreignKey: "user_id" });
+
+User.hasMany(ApiKey, { foreignKey: "user_id", onDelete: "CASCADE" });
+ApiKey.belongsTo(User, { foreignKey: "user_id" });
+
 module.exports = {
     sequelize,
     User,
@@ -51,5 +59,8 @@ module.exports = {
     Certification,
     Licence,
     Course,
-    EmploymentHistory
+    EmploymentHistory,
+    InfluencerDay,
+    ApiKey,
+    BlacklistedToken
 };

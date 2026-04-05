@@ -1,4 +1,5 @@
 require("dotenv").config();
+require("./utils/winnerScheduler");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -12,8 +13,16 @@ const profileRoutes = require("./routes/profileRoutes");
 const bidRoutes = require("./routes/bidRoutes");
 const { apiLimiter } = require("./middleware/rateLimiter");
 const swaggerSpec = require("./config/swagger");
-
+const influencerRoutes = require("./routes/influencerRoutes");
+const apiKeyRoutes = require("./routes/apiKeyRoutes");
 const app = express();
+
+const selectWinner = require("./utils/winnerScheduler");
+
+const apiKeyMiddleware = require("./middleware/apiKeyMiddleware");
+
+const devRoutes = require("./routes/devRoutes");
+app.use("/api/dev", devRoutes);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -23,16 +32,22 @@ app.use(helmet());
 app.use("/api", apiLimiter);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-//app.use(express.static(path.join(__dirname, "public")));
+
 
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/bids", bidRoutes);
 
-
+app.use("/api/influencer", influencerRoutes);
+app.use("/api/keys", apiKeyRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ message: "Server is running" });
+});
+
+app.get("/api/dev/run-winner", async (req, res) => {
+  await selectWinner();
+  res.json({ message: "Winner selection triggered manually" });
 });
 
 sequelize.authenticate()
@@ -40,6 +55,14 @@ sequelize.authenticate()
   .then(() => sequelize.sync({ alter: true }))
   .then(() => console.log("Models synced"))
   .catch((err) => console.error("DB error:", err));
+  
+  app.get("/api/dev/test-key", apiKeyMiddleware, (req, res) => {
+  res.json({
+    message: "API key works",
+    keyId: req.apiKey.id,
+    usageCount: req.apiKey.usage_count
+  });
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

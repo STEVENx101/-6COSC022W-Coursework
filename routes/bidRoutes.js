@@ -1,8 +1,6 @@
 const express = require("express");
 const { body } = require("express-validator");
-
 const router = express.Router();
-
 
 const authMiddleware = require("../middleware/authMiddleware");
 const validate = require("../middleware/validate");
@@ -10,9 +8,13 @@ const validate = require("../middleware/validate");
 const {
   createBid,
   getMyBids,
-  updateBid
+  updateBid,
+  cancelBid,
+  getTomorrowSlot,
+  getBidHistory,
+  getMyBidStatus,
+  getMonthlyLimitStatus
 } = require("../controllers/bidController");
-
 
 /**
  * @swagger
@@ -38,10 +40,7 @@ const {
  *     responses:
  *       201:
  *         description: Bid created successfully
- *       401:
- *         description: Unauthorized
  */
-
 router.post(
   "/",
   authMiddleware,
@@ -51,7 +50,11 @@ router.post(
       .withMessage("Bid amount must be greater than 0"),
     body("bid_date")
       .isDate()
-      .withMessage("Valid bid date is required")
+      .withMessage("Valid bid date is required"),
+    body("slot_date")
+      .optional()
+      .isDate()
+      .withMessage("Valid slot date is required")
   ],
   validate,
   createBid
@@ -61,17 +64,14 @@ router.post(
  * @swagger
  * /api/bids/me:
  *   get:
- *     summary: Get current user's bids
+ *     summary: Get my bids
  *     tags: [Bids]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of bids
- *       401:
- *         description: Unauthorized
  */
-
 router.get("/me", authMiddleware, getMyBids);
 
 /**
@@ -88,23 +88,10 @@ router.get("/me", authMiddleware, getMyBids);
  *         required: true
  *         schema:
  *           type: integer
- *     requestBody:
- *       required: false
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/BidUpdateRequest'
  *     responses:
  *       200:
  *         description: Bid updated successfully
- *       400:
- *         description: Validation error or bid amount decreased
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: Bid not found
  */
-
 router.put(
   "/:id",
   authMiddleware,
@@ -117,6 +104,10 @@ router.put(
       .optional()
       .isDate()
       .withMessage("Valid bid date is required"),
+    body("slot_date")
+      .optional()
+      .isDate()
+      .withMessage("Valid slot date is required"),
     body("status")
       .optional()
       .isIn(["PENDING", "WON", "LOST"])
@@ -126,5 +117,80 @@ router.put(
   updateBid
 );
 
+/**
+ * @swagger
+ * /api/bids/{id}/cancel:
+ *   put:
+ *     summary: Cancel a bid
+ *     tags: [Bids]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Bid cancelled successfully
+ */
+router.put("/:id/cancel", authMiddleware, cancelBid);
+
+/**
+ * @swagger
+ * /api/bids/tomorrow-slot:
+ *   get:
+ *     summary: View tomorrow bidding slot
+ *     tags: [Bids]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Tomorrow slot fetched successfully
+ */
+router.get("/tomorrow-slot", authMiddleware, getTomorrowSlot);
+
+/**
+ * @swagger
+ * /api/bids/history:
+ *   get:
+ *     summary: Get bidding history
+ *     tags: [Bids]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Bidding history fetched successfully
+ */
+router.get("/history", authMiddleware, getBidHistory);
+
+/**
+ * @swagger
+ * /api/bids/status/me:
+ *   get:
+ *     summary: Get my bid status summary
+ *     tags: [Bids]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Bid status summary fetched successfully
+ */
+router.get("/status/me", authMiddleware, getMyBidStatus);
+
+/**
+ * @swagger
+ * /api/bids/monthly-limit:
+ *   get:
+ *     summary: Get monthly bid usage limit status
+ *     tags: [Bids]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Monthly limit status fetched successfully
+ */
+router.get("/monthly-limit", authMiddleware, getMonthlyLimitStatus);
 
 module.exports = router;

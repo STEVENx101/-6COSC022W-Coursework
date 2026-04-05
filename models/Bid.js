@@ -14,9 +14,17 @@ const Bid = sequelize.define("Bid", {
     type: DataTypes.DATEONLY,
     allowNull: false
   },
+  slot_date: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
   status: {
     type: DataTypes.ENUM("PENDING", "WON", "LOST"),
     defaultValue: "PENDING"
+  },
+  cancelled: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
 }, {
   tableName: "bids",

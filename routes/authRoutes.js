@@ -8,13 +8,13 @@ const {
   loginUser,
   verifyEmail,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  logoutUser
 } = require("../controllers/authController");
 
 const validate = require("../middleware/validate");
 const { authLimiter } = require("../middleware/rateLimiter");
-
-
+const authMiddleware = require("../middleware/authMiddleware");
 
 /**
  * @swagger
@@ -41,8 +41,6 @@ const { authLimiter } = require("../middleware/rateLimiter");
  *       400:
  *         description: Validation error or user already exists
  */
-
-
 router.post(
   "/register",
   authLimiter,
@@ -55,8 +53,6 @@ router.post(
   validate,
   registerUser
 );
-
-
 
 /**
  * @swagger
@@ -78,7 +74,6 @@ router.post(
  *       403:
  *         description: Email not verified
  */
-
 router.post(
   "/login",
   authLimiter,
@@ -90,28 +85,33 @@ router.post(
   loginUser
 );
 
-
 /**
  * @swagger
- * /api/auth/verify/{token}:
- *   get:
- *     summary: Verify user email
+ * /api/auth/verify:
+ *   post:
+ *     summary: Verify user email using verification token
  *     tags: [Auth]
- *     parameters:
- *       - in: path
- *         name: token
- *         required: true
- *         schema:
- *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/VerifyEmailRequest'
  *     responses:
  *       200:
  *         description: Email verified successfully
  *       400:
  *         description: Invalid or expired token
  */
-
-
-router.get("/verify/:token", verifyEmail);
+router.post(
+  "/verify",
+  authLimiter,
+  [
+    body("token").notEmpty().withMessage("Verification token is required")
+  ],
+  validate,
+  verifyEmail
+);
 
 /**
  * @swagger
@@ -131,7 +131,6 @@ router.get("/verify/:token", verifyEmail);
  *       404:
  *         description: User not found
  */
-
 router.post(
   "/forgot-password",
   authLimiter,
@@ -160,7 +159,6 @@ router.post(
  *       400:
  *         description: Invalid token or validation error
  */
-
 router.post(
   "/reset-password",
   authLimiter,
@@ -174,5 +172,21 @@ router.post(
   resetPassword
 );
 
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout current user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/logout", authMiddleware, logoutUser);
 
 module.exports = router;
