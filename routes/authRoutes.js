@@ -23,6 +23,21 @@ const authMiddleware = require("../middleware/authMiddleware");
  *   description: Authentication and password management
  */
 
+// Password strength validation – requires min 8 chars, uppercase, lowercase,
+// number, and special character. This meets the CW2 security requirement for
+// "password strength validation (min length, complexity)."
+const passwordValidator = body("password")
+  .isLength({ min: 8 })
+  .withMessage("Password must be at least 8 characters")
+  .matches(/[A-Z]/)
+  .withMessage("Password must contain at least one uppercase letter")
+  .matches(/[a-z]/)
+  .withMessage("Password must contain at least one lowercase letter")
+  .matches(/[0-9]/)
+  .withMessage("Password must contain at least one number")
+  .matches(/[!@#$%^&*(),.?":{}|<>]/)
+  .withMessage("Password must contain at least one special character");
+
 /**
  * @swagger
  * /api/auth/register:
@@ -45,10 +60,11 @@ router.post(
   "/register",
   authLimiter,
   [
-    body("email").isEmail().withMessage("Valid email is required"),
-    body("password")
-      .isLength({ min: 6 })
-      .withMessage("Password must be at least 6 characters")
+    body("email")
+      .isEmail().withMessage("Valid email is required")
+      .normalizeEmail()
+      .trim(),
+    passwordValidator
   ],
   validate,
   registerUser
@@ -78,7 +94,10 @@ router.post(
   "/login",
   authLimiter,
   [
-    body("email").isEmail().withMessage("Valid email is required"),
+    body("email")
+      .isEmail().withMessage("Valid email is required")
+      .normalizeEmail()
+      .trim(),
     body("password").notEmpty().withMessage("Password is required")
   ],
   validate,
@@ -107,7 +126,10 @@ router.post(
   "/verify",
   authLimiter,
   [
-    body("token").notEmpty().withMessage("Verification token is required")
+    body("token")
+      .notEmpty().withMessage("Verification token is required")
+      .trim()
+      .escape()
   ],
   validate,
   verifyEmail
@@ -135,7 +157,10 @@ router.post(
   "/forgot-password",
   authLimiter,
   [
-    body("email").isEmail().withMessage("Valid email is required")
+    body("email")
+      .isEmail().withMessage("Valid email is required")
+      .normalizeEmail()
+      .trim()
   ],
   validate,
   forgotPassword
@@ -163,10 +188,21 @@ router.post(
   "/reset-password",
   authLimiter,
   [
-    body("token").notEmpty().withMessage("Token is required"),
+    body("token")
+      .notEmpty().withMessage("Token is required")
+      .trim()
+      .escape(),
     body("newPassword")
-      .isLength({ min: 6 })
-      .withMessage("New password must be at least 6 characters")
+      .isLength({ min: 8 })
+      .withMessage("New password must be at least 8 characters")
+      .matches(/[A-Z]/)
+      .withMessage("Password must contain at least one uppercase letter")
+      .matches(/[a-z]/)
+      .withMessage("Password must contain at least one lowercase letter")
+      .matches(/[0-9]/)
+      .withMessage("Password must contain at least one number")
+      .matches(/[!@#$%^&*(),.?":{}|<>]/)
+      .withMessage("Password must contain at least one special character")
   ],
   validate,
   resetPassword

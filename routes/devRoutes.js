@@ -23,10 +23,12 @@ const apiKeyMiddleware = require("../middleware/apiKeyMiddleware");
  *       401:
  *         description: Invalid or missing API key
  */
-router.get("/test-key", apiKeyMiddleware, (req, res) => {
+router.get("/test-key", apiKeyMiddleware("read:analytics"), (req, res) => {
   res.json({
     message: "API key works",
     keyId: req.apiKey.id,
+    client: req.apiKey.client_name,
+    permissions: req.apiKey.permissions,
     usageCount: req.apiKey.usage_count
   });
 });
