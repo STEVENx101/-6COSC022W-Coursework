@@ -29,23 +29,7 @@ exports.createBid = async (req, res) => {
       });
     }
 
-    const { start, end } = getMonthRange();
 
-    const monthlyCount = await Bid.count({
-      where: {
-        user_id: userId,
-        cancelled: false,
-        bid_date: {
-          [Op.between]: [start, end]
-        }
-      }
-    });
-
-    if (monthlyCount >= 3) {
-      return res.status(400).json({
-        message: "Monthly bid limit reached (3/3)"
-      });
-    }
 
     const bid = await Bid.create({
       user_id: userId,
