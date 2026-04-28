@@ -1,5 +1,4 @@
-const { Op } = require("sequelize");
-const { Bid } = require("../models");
+const { Bid, Certification, Course, Licence } = require("../models");
 
 function getTomorrowDate() {
   const tomorrow = new Date();
@@ -18,6 +17,15 @@ function getMonthRange() {
   return { start, end };
 }
 
+async function getTotalSponsorship(userId) {
+  const certs = await Certification.findAll({ where: { user_id: userId } });
+  const courses = await Course.findAll({ where: { user_id: userId } });
+  const licences = await Licence.findAll({ where: { user_id: userId } });
+  
+  const total = [...certs, ...courses, ...licences].reduce((sum, item) => sum + (parseFloat(item.sponsorship_amount) || 0), 0);
+  return total;
+}
+
 exports.createBid = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -29,7 +37,32 @@ exports.createBid = async (req, res) => {
       });
     }
 
+    // 1. Check Sponsored Amount Limit
+    const totalSponsorship = await getTotalSponsorship(userId);
+    if (parseFloat(bid_amount) > totalSponsorship) {
+      return res.status(400).json({
+        message: `Your bid (£${bid_amount}) exceeds your total sponsorship (£${totalSponsorship.toFixed(2)}). Offer more sponsorships first!`
+      });
+    }
 
+    // 2. Check Frequency Limit (One active bid per month)
+    const { start, end } = getMonthRange();
+    const existingActiveBid = await Bid.findOne({
+      where: {
+        user_id: userId,
+        cancelled: false,
+        status: "PENDING",
+        slot_date: {
+          [Op.between]: [start, end]
+        }
+      }
+    });
+
+    if (existingActiveBid) {
+      return res.status(400).json({
+        message: "You already have an active pending bid for this month. You can only have one active bidding per month."
+      });
+    }
 
     const bid = await Bid.create({
       user_id: userId,
@@ -59,7 +92,24 @@ exports.getMyBids = async (req, res) => {
       order: [["id", "DESC"]]
     });
 
-    res.json(bids);
+    // For each pending bid, check if it's the highest for its slot_date
+    const enrichedBids = await Promise.all(bids.map(async (bid) => {
+      const b = bid.toJSON();
+      if (b.status === "PENDING" && !b.cancelled) {
+        const highestBid = await Bid.findOne({
+          where: {
+            slot_date: b.slot_date,
+            cancelled: false
+          },
+          order: [["bid_amount", "DESC"]]
+        });
+        
+        b.competitive_status = (highestBid && highestBid.id === b.id) ? "Winning" : "Losing";
+      }
+      return b;
+    }));
+
+    res.json(enrichedBids);
   } catch (err) {
     console.error(err);
     res.status(500).json({
@@ -93,10 +143,19 @@ exports.updateBid = async (req, res) => {
       });
     }
 
-    if (bid_amount !== undefined && Number(bid_amount) < Number(bid.bid_amount)) {
-      return res.status(400).json({
-        message: "Bid amount cannot be decreased"
-      });
+    if (bid_amount !== undefined) {
+      if (Number(bid_amount) < Number(bid.bid_amount)) {
+        return res.status(400).json({
+          message: "Bid amount cannot be decreased"
+        });
+      }
+
+      const totalSponsorship = await getTotalSponsorship(userId);
+      if (Number(bid_amount) > totalSponsorship) {
+        return res.status(400).json({
+          message: `Your updated bid (£${bid_amount}) exceeds your total sponsorship (£${totalSponsorship.toFixed(2)})`
+        });
+      }
     }
 
     await bid.update({
@@ -179,7 +238,13 @@ exports.getTomorrowSlot = async (req, res) => {
     res.json({
       slot_date: tomorrow,
       totalBids: bids.length,
-      bids
+      bids: bids.map(bid => {
+        const b = bid.toJSON();
+        if (req.user && b.user_id !== req.user.id) {
+          b.bid_amount = "£***";
+        }
+        return b;
+      })
     });
   } catch (err) {
     console.error(err);

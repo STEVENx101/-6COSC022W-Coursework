@@ -4,6 +4,7 @@ const router = express.Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
 const validate = require("../middleware/validate");
+const authorize = require("../middleware/roleMiddleware");
 
 const {
   createProfile,
@@ -11,7 +12,10 @@ const {
   getMyFullProfile,
   updateMyProfile,
   updateLinkedIn,
-  getProfileCompletion
+  getProfileCompletion,
+  sponsorCertification,
+  sponsorLicence,
+  sponsorCourse
 } = require("../controllers/profileController");
 
 const {
@@ -717,5 +721,12 @@ router.put("/employment/:id", authMiddleware, validate, updateEmployment);
  *         description: Employment record not found
  */
 router.delete("/employment/:id", authMiddleware, deleteEmployment);
+
+/* =========================
+   SPONSORSHIP (Clients only)
+========================= */
+router.put("/certifications/:id/sponsor", authMiddleware, authorize(["clients", "admin"]), sponsorCertification);
+router.put("/licences/:id/sponsor", authMiddleware, authorize(["clients", "admin"]), sponsorLicence);
+router.put("/courses/:id/sponsor", authMiddleware, authorize(["clients", "admin"]), sponsorCourse);
 
 module.exports = router;

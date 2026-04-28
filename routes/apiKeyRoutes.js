@@ -3,6 +3,7 @@ const { body } = require("express-validator");
 const router = express.Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
+const authorize = require("../middleware/roleMiddleware");
 const validate = require("../middleware/validate");
 
 const {
@@ -69,6 +70,7 @@ router.get("/permissions", authMiddleware, getValidPermissions);
 router.post(
   "/generate",
   authMiddleware,
+  authorize(["developer", "admin"]),
   [
     body("client_name").optional().trim().escape().isLength({ max: 100 }),
     body("permissions").optional().isArray()
@@ -91,7 +93,7 @@ router.post(
  *       401:
  *         description: Unauthorized
  */
-router.get("/me", authMiddleware, getMyApiKeys);
+router.get("/me", authMiddleware, authorize(["developer", "admin"]), getMyApiKeys);
 
 /**
  * @swagger
@@ -115,7 +117,7 @@ router.get("/me", authMiddleware, getMyApiKeys);
  *       404:
  *         description: API key not found
  */
-router.put("/:id/revoke", authMiddleware, revokeApiKey);
+router.put("/:id/revoke", authMiddleware, authorize(["developer", "admin"]), revokeApiKey);
 
 /**
  * @swagger
@@ -139,7 +141,7 @@ router.put("/:id/revoke", authMiddleware, revokeApiKey);
  *       404:
  *         description: API key not found
  */
-router.get("/:id/stats", authMiddleware, getApiKeyStats);
+router.get("/:id/stats", authMiddleware, authorize(["developer", "admin"]), getApiKeyStats);
 
 /**
  * @swagger
@@ -173,6 +175,6 @@ router.get("/:id/stats", authMiddleware, getApiKeyStats);
  *       404:
  *         description: API key not found
  */
-router.get("/:id/logs", authMiddleware, getApiKeyLogs);
+router.get("/:id/logs", authMiddleware, authorize(["developer", "admin"]), getApiKeyLogs);
 
 module.exports = router;

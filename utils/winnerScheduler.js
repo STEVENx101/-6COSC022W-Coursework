@@ -13,19 +13,6 @@ function getTomorrowDate() {
   return tomorrow.toISOString().split("T")[0];
 }
 
-function getMonthRange() {
-  const now = new Date();
-
-  const start = new Date(now.getFullYear(), now.getMonth(), 1)
-    .toISOString()
-    .split("T")[0];
-
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    .toISOString()
-    .split("T")[0];
-
-  return { start, end };
-}
 
 const selectWinner = async () => {
   try {
@@ -33,7 +20,11 @@ const selectWinner = async () => {
 
     const today = getTodayDate();
     const tomorrow = getTomorrowDate();
-    const { start, end } = getMonthRange();
+    
+    // Calculate month range for the slot date (tomorrow)
+    const slotDate = new Date(tomorrow);
+    const start = new Date(slotDate.getFullYear(), slotDate.getMonth(), 1).toISOString().split("T")[0];
+    const end = new Date(slotDate.getFullYear(), slotDate.getMonth() + 1, 0).toISOString().split("T")[0];
 
     // get all valid bids for tomorrow slot, highest first
     const bids = await Bid.findAll({
@@ -102,9 +93,9 @@ const selectWinner = async () => {
       status: "WON"
     });
 
-    // create/update influencer of the day for today
+    // create/update influencer of the day for tomorrow
     const existingInfluencer = await InfluencerDay.findOne({
-      where: { active_date: today }
+      where: { active_date: tomorrow }
     });
 
     if (existingInfluencer) {
@@ -116,7 +107,7 @@ const selectWinner = async () => {
     } else {
       await InfluencerDay.create({
         user_id: selectedWinner.user_id,
-        active_date: today,
+        active_date: tomorrow,
         appearance_count: 0,
         is_active: true
       });
@@ -157,8 +148,8 @@ const selectWinner = async () => {
   }
 };
 
-// run automatically every day at midnight
-cron.schedule("0 0 * * *", async () => {
+// run automatically every day at 6 PM
+cron.schedule("0 18 * * *", async () => {
   await selectWinner();
 });
 

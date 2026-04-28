@@ -353,13 +353,13 @@ exports.getAlumniList = async (req, res) => {
 
         const certifications = await Certification.findAll({
           where: { user_id: user.id },
-          attributes: ["title", "organization", "year"],
+          attributes: ["id", "title", "organization", "year", "sponsorship_amount"],
           raw: true
         });
 
         const courses = await Course.findAll({
           where: { user_id: user.id },
-          attributes: ["course_name", "provider", "year"],
+          attributes: ["id", "course_name", "provider", "year", "sponsorship_amount"],
           raw: true
         });
 

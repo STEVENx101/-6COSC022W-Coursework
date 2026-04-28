@@ -8,6 +8,12 @@ function apiKeyMiddleware(requiredPermission) {
   return async (req, res, next) => {
     try {
       const apiKeyValue = req.headers["x-api-key"];
+      
+      // If user is already authenticated via JWT (internal web app use), 
+      // we can bypass the API key requirement unless specifically needed.
+      if (req.user && !apiKeyValue) {
+        return next();
+      }
 
       if (!apiKeyValue) {
         return res.status(401).json({

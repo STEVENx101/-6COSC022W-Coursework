@@ -9,12 +9,15 @@ const {
   verifyEmail,
   forgotPassword,
   resetPassword,
-  logoutUser
+  logoutUser,
+  getAllUsers,
+  updateUserRole
 } = require("../controllers/authController");
 
 const validate = require("../middleware/validate");
 const { authLimiter } = require("../middleware/rateLimiter");
 const authMiddleware = require("../middleware/authMiddleware");
+const authorize = require("../middleware/roleMiddleware");
 
 /**
  * @swagger
@@ -224,5 +227,9 @@ router.post(
  *         description: Unauthorized
  */
 router.post("/logout", authMiddleware, logoutUser);
+
+// Admin Routes
+router.get("/users", authMiddleware, authorize(["admin"]), getAllUsers);
+router.put("/users/:userId/role", authMiddleware, authorize(["admin"]), updateUserRole);
 
 module.exports = router;

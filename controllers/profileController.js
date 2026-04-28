@@ -217,3 +217,45 @@ exports.getProfileCompletion = async (req, res) => {
     });
   }
 };
+
+exports.sponsorCertification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount } = req.body;
+    const cert = await Certification.findByPk(id);
+    if (!cert) return res.status(404).json({ message: "Certification not found" });
+    await cert.update({ sponsorship_amount: amount, is_sponsored: true });
+    res.json({ message: "Sponsorship updated", cert });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.sponsorLicence = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount } = req.body;
+    const licence = await Licence.findByPk(id);
+    if (!licence) return res.status(404).json({ message: "Licence not found" });
+    await licence.update({ sponsorship_amount: amount, is_sponsored: true });
+    res.json({ message: "Sponsorship updated", licence });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.sponsorCourse = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount } = req.body;
+    const course = await Course.findByPk(id);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+    await course.update({ sponsorship_amount: amount, is_sponsored: true });
+    res.json({ message: "Sponsorship updated", course });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

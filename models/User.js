@@ -16,6 +16,14 @@ const User = sequelize.define("User", {
   },
   verified: {
     type: DataTypes.BOOLEAN,
+    defaultValue: true
+  },
+  role: {
+    type: DataTypes.ENUM("user", "developer", "clients", "admin"),
+    defaultValue: "user"
+  },
+  attended_event: {
+    type: DataTypes.BOOLEAN,
     defaultValue: false
   }
 }, {
