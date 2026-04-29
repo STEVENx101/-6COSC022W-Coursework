@@ -17,17 +17,16 @@ import { useState } from "react";
 import API from "../api/api";
 
 const NAV_ITEMS = [
-  { path: "/dashboard", label: "Dashboard", icon: HiOutlineHome },
-  { path: "/alumni", label: "Alumni Directory", icon: HiOutlineUsers },
+  { path: "/dashboard", label: "Dashboard", icon: HiOutlineHome, roles: ["admin"] },
+  { path: "/alumni", label: "Alumni Directory", icon: HiOutlineUsers, roles: ["clients", "admin"] },
   { path: "/profile", label: "My Profile", icon: HiOutlineUserCircle },
-  { path: "/bids", label: "Bidding", icon: HiOutlineCurrencyDollar, roles: ["user", "admin"] },
+  { path: "/bids", label: "Bidding", icon: HiOutlineCurrencyDollar, roles: ["user"] },
   { path: "/influencer", label: "Influencer of Day", icon: HiOutlineStar, roles: ["clients", "admin", "user"] },
-  { path: "/export", label: "Export & Reports", icon: HiOutlineDocumentReport, roles: ["admin", "clients"] },
-  { path: "/api-keys", label: "API Keys", icon: HiOutlineKey, roles: ["developer", "admin"] },
+  { path: "/api-keys", label: "API Keys", icon: HiOutlineKey, roles: ["developer"] },
   { path: "/admin", label: "Admin Panel", icon: HiOutlineShieldCheck, roles: ["admin"] },
 ];
 
-function Sidebar({ collapsed, onToggle }) {
+function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -44,7 +43,7 @@ function Sidebar({ collapsed, onToggle }) {
   }
 
   return (
-    <aside className={`app-sidebar ${collapsed ? "collapsed" : ""}`}>
+    <aside className="app-sidebar">
       <div className="sidebar-header">
         <div className="sidebar-logo">A</div>
         <span>Alumni Analytics</span>
@@ -72,14 +71,6 @@ function Sidebar({ collapsed, onToggle }) {
         <button className="sidebar-link" onClick={logout}>
           <HiOutlineLogout />
           <span className="sidebar-label">Logout</span>
-        </button>
-        <button
-          className="sidebar-link"
-          onClick={onToggle}
-          style={{ marginTop: 4 }}
-        >
-          {collapsed ? <HiOutlineChevronRight /> : <HiOutlineChevronLeft />}
-          <span className="sidebar-label">Collapse</span>
         </button>
       </div>
     </aside>

@@ -70,7 +70,7 @@ router.get("/permissions", authMiddleware, getValidPermissions);
 router.post(
   "/generate",
   authMiddleware,
-  authorize(["developer", "admin"]),
+  authorize(["developer"]),
   [
     body("client_name").optional().trim().escape().isLength({ max: 100 }),
     body("permissions").optional().isArray()
@@ -93,7 +93,7 @@ router.post(
  *       401:
  *         description: Unauthorized
  */
-router.get("/me", authMiddleware, authorize(["developer", "admin"]), getMyApiKeys);
+router.get("/me", authMiddleware, authorize(["developer"]), getMyApiKeys);
 
 /**
  * @swagger
@@ -117,7 +117,7 @@ router.get("/me", authMiddleware, authorize(["developer", "admin"]), getMyApiKey
  *       404:
  *         description: API key not found
  */
-router.put("/:id/revoke", authMiddleware, authorize(["developer", "admin"]), revokeApiKey);
+router.put("/:id/revoke", authMiddleware, authorize(["developer"]), revokeApiKey);
 
 /**
  * @swagger
@@ -141,7 +141,7 @@ router.put("/:id/revoke", authMiddleware, authorize(["developer", "admin"]), rev
  *       404:
  *         description: API key not found
  */
-router.get("/:id/stats", authMiddleware, authorize(["developer", "admin"]), getApiKeyStats);
+router.get("/:id/stats", authMiddleware, authorize(["developer"]), getApiKeyStats);
 
 /**
  * @swagger
@@ -175,6 +175,6 @@ router.get("/:id/stats", authMiddleware, authorize(["developer", "admin"]), getA
  *       404:
  *         description: API key not found
  */
-router.get("/:id/logs", authMiddleware, authorize(["developer", "admin"]), getApiKeyLogs);
+router.get("/:id/logs", authMiddleware, authorize(["developer"]), getApiKeyLogs);
 
 module.exports = router;

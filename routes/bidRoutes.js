@@ -3,6 +3,7 @@ const { body } = require("express-validator");
 const router = express.Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
+const authorize = require("../middleware/roleMiddleware");
 const validate = require("../middleware/validate");
 
 const {
@@ -44,6 +45,7 @@ const {
 router.post(
   "/",
   authMiddleware,
+  authorize(["user"]),
   [
     body("bid_amount")
       .isFloat({ gt: 0 })
@@ -72,7 +74,7 @@ router.post(
  *       200:
  *         description: List of bids
  */
-router.get("/me", authMiddleware, getMyBids);
+router.get("/me", authMiddleware, authorize(["user"]), getMyBids);
 
 /**
  * @swagger
@@ -95,6 +97,7 @@ router.get("/me", authMiddleware, getMyBids);
 router.put(
   "/:id",
   authMiddleware,
+  authorize(["user"]),
   [
     body("bid_amount")
       .optional()
@@ -135,7 +138,7 @@ router.put(
  *       200:
  *         description: Bid cancelled successfully
  */
-router.put("/:id/cancel", authMiddleware, cancelBid);
+router.put("/:id/cancel", authMiddleware, authorize(["user"]), cancelBid);
 
 /**
  * @swagger
@@ -149,7 +152,7 @@ router.put("/:id/cancel", authMiddleware, cancelBid);
  *       200:
  *         description: Tomorrow slot fetched successfully
  */
-router.get("/tomorrow-slot", authMiddleware, getTomorrowSlot);
+router.get("/tomorrow-slot", authMiddleware, authorize(["user"]), getTomorrowSlot);
 
 /**
  * @swagger
@@ -163,7 +166,7 @@ router.get("/tomorrow-slot", authMiddleware, getTomorrowSlot);
  *       200:
  *         description: Bidding history fetched successfully
  */
-router.get("/history", authMiddleware, getBidHistory);
+router.get("/history", authMiddleware, authorize(["user"]), getBidHistory);
 
 /**
  * @swagger
@@ -177,7 +180,7 @@ router.get("/history", authMiddleware, getBidHistory);
  *       200:
  *         description: Bid status summary fetched successfully
  */
-router.get("/status/me", authMiddleware, getMyBidStatus);
+router.get("/status/me", authMiddleware, authorize(["user"]), getMyBidStatus);
 
 /**
  * @swagger
@@ -191,6 +194,6 @@ router.get("/status/me", authMiddleware, getMyBidStatus);
  *       200:
  *         description: Monthly limit status fetched successfully
  */
-router.get("/monthly-limit", authMiddleware, getMonthlyLimitStatus);
+router.get("/monthly-limit", authMiddleware, authorize(["user"]), getMonthlyLimitStatus);
 
 module.exports = router;

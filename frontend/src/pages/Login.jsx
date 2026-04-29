@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../api/api";
 import toast, { Toaster } from "react-hot-toast";
@@ -8,6 +8,13 @@ function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("timeout")) {
+      toast.error("Session expired. Please login again.", { id: "timeout-toast" });
+    }
+  }, []);
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -36,7 +43,15 @@ function Login() {
         console.error("API key setup:", keyErr);
       }
 
-      setTimeout(() => navigate("/dashboard"), 500);
+      const user = res.data.user;
+      const defaultPages = {
+        admin: "/dashboard",
+        clients: "/alumni",
+        developer: "/api-keys",
+        user: "/bids"
+      };
+
+      setTimeout(() => navigate(defaultPages[user.role] || "/profile"), 500);
     } catch (err) {
       const msg = err.response?.data?.message || "Login failed";
       toast.error(msg);

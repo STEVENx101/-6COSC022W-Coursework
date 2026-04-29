@@ -3,6 +3,7 @@ const router = express.Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
 const apiKeyMiddleware = require("../middleware/apiKeyMiddleware");
+const authorize = require("../middleware/roleMiddleware");
 
 const {
   getOverview,
@@ -40,7 +41,7 @@ const {
  *       403:
  *         description: Insufficient permissions
  */
-router.get("/overview", authMiddleware, apiKeyMiddleware("read:analytics"), getOverview);
+router.get("/overview", authMiddleware, authorize(["admin"]), apiKeyMiddleware("read:analytics"), getOverview);
 
 /**
  * @swagger
@@ -59,7 +60,7 @@ router.get("/overview", authMiddleware, apiKeyMiddleware("read:analytics"), getO
  *       403:
  *         description: Insufficient permissions
  */
-router.get("/certifications", authMiddleware, apiKeyMiddleware("read:analytics"), getCertificationStats);
+router.get("/certifications", authMiddleware, authorize(["admin"]), apiKeyMiddleware("read:analytics"), getCertificationStats);
 
 /**
  * @swagger
@@ -78,7 +79,7 @@ router.get("/certifications", authMiddleware, apiKeyMiddleware("read:analytics")
  *       403:
  *         description: Insufficient permissions
  */
-router.get("/courses", authMiddleware, apiKeyMiddleware("read:analytics"), getCourseStats);
+router.get("/courses", authMiddleware, authorize(["admin"]), apiKeyMiddleware("read:analytics"), getCourseStats);
 
 /**
  * @swagger
@@ -97,7 +98,7 @@ router.get("/courses", authMiddleware, apiKeyMiddleware("read:analytics"), getCo
  *       403:
  *         description: Insufficient permissions
  */
-router.get("/degrees", authMiddleware, apiKeyMiddleware("read:analytics"), getDegreeStats);
+router.get("/degrees", authMiddleware, authorize(["admin"]), apiKeyMiddleware("read:analytics"), getDegreeStats);
 
 /**
  * @swagger
@@ -116,7 +117,7 @@ router.get("/degrees", authMiddleware, apiKeyMiddleware("read:analytics"), getDe
  *       403:
  *         description: Insufficient permissions
  */
-router.get("/employment", authMiddleware, apiKeyMiddleware("read:analytics"), getEmploymentStats);
+router.get("/employment", authMiddleware, authorize(["admin"]), apiKeyMiddleware("read:analytics"), getEmploymentStats);
 
 /**
  * @swagger
@@ -135,7 +136,7 @@ router.get("/employment", authMiddleware, apiKeyMiddleware("read:analytics"), ge
  *       403:
  *         description: Insufficient permissions
  */
-router.get("/skills-gap", authMiddleware, apiKeyMiddleware("read:analytics"), getSkillsGap);
+router.get("/skills-gap", authMiddleware, authorize(["admin"]), apiKeyMiddleware("read:analytics"), getSkillsGap);
 
 /**
  * @swagger
@@ -154,7 +155,7 @@ router.get("/skills-gap", authMiddleware, apiKeyMiddleware("read:analytics"), ge
  *       403:
  *         description: Insufficient permissions
  */
-router.get("/trends", authMiddleware, apiKeyMiddleware("read:analytics"), getTrends);
+router.get("/trends", authMiddleware, authorize(["admin"]), apiKeyMiddleware("read:analytics"), getTrends);
 
 /**
  * @swagger
@@ -173,7 +174,7 @@ router.get("/trends", authMiddleware, apiKeyMiddleware("read:analytics"), getTre
  *       403:
  *         description: Insufficient permissions
  */
-router.get("/bid-activity", authMiddleware, apiKeyMiddleware("read:analytics"), getBidActivity);
+router.get("/bid-activity", authMiddleware, authorize(["admin"]), apiKeyMiddleware("read:analytics"), getBidActivity);
 
 /**
  * @swagger
@@ -223,6 +224,6 @@ router.get("/bid-activity", authMiddleware, apiKeyMiddleware("read:analytics"), 
  *       403:
  *         description: Insufficient permissions
  */
-router.get("/alumni", authMiddleware, apiKeyMiddleware("read:alumni"), getAlumniList);
+router.get("/alumni", authMiddleware, authorize(["clients", "admin"]), apiKeyMiddleware("read:alumni"), getAlumniList);
 
 module.exports = router;
