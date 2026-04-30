@@ -196,4 +196,15 @@ router.get("/status/me", authMiddleware, authorize(["user"]), getMyBidStatus);
  */
 router.get("/monthly-limit", authMiddleware, authorize(["user"]), getMonthlyLimitStatus);
 
+/**
+ * @swagger
+ * /api/bids/public/today:
+ *   get:
+ *     summary: View today's bids (Public)
+ *     tags: [Bids]
+ *     responses:
+ *       200:
+ *         description: Today's bids fetched successfully
+ */
+
 module.exports = router;

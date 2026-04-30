@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const { Bid, Certification, Course, Licence } = require("../models");
 
 function getTomorrowDate() {
@@ -45,22 +46,19 @@ exports.createBid = async (req, res) => {
       });
     }
 
-    // 2. Check Frequency Limit (One active bid per month)
-    const { start, end } = getMonthRange();
+    // 2. Check Frequency Limit (One active bid per day)
     const existingActiveBid = await Bid.findOne({
       where: {
         user_id: userId,
         cancelled: false,
         status: "PENDING",
-        slot_date: {
-          [Op.between]: [start, end]
-        }
+        slot_date: slot_date || getTomorrowDate()
       }
     });
 
     if (existingActiveBid) {
       return res.status(400).json({
-        message: "You already have an active pending bid for this month. You can only have one active bidding per month."
+        message: "You already have an active pending bid for this day. You can only have one active bidding per day."
       });
     }
 
@@ -303,25 +301,52 @@ exports.getMyBidStatus = async (req, res) => {
 
 exports.getMonthlyLimitStatus = async (req, res) => {
   try {
-    const { start, end } = getMonthRange();
+    const today = new Date().toISOString().split("T")[0];
 
     const count = await Bid.count({
       where: {
         user_id: req.user.id,
         cancelled: false,
-        bid_date: {
-          [Op.between]: [start, end]
-        }
+        bid_date: today
       }
     });
 
     res.json({
       used: count,
-      limit: 3,
-      remaining: Math.max(0, 3 - count),
-      reached: count >= 3,
-      month_start: start,
-      month_end: end
+      limit: 1,
+      remaining: Math.max(0, 1 - count),
+      reached: count >= 1,
+      date: today
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Server error"
+    });
+  }
+};
+
+exports.getPublicBids = async (req, res) => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+
+    const bids = await Bid.findAll({
+      where: {
+        slot_date: today,
+        cancelled: false
+      },
+      order: [["bid_amount", "DESC"]]
+    });
+
+    res.json({
+      slot_date: today,
+      totalBids: bids.length,
+      bids: bids.map((bid, index) => ({
+        id: index + 1,
+        bid_amount: "£***",
+        competitive_status: index === 0 ? "Highest Bid" : "Competitive",
+        status: "ACTIVE"
+      }))
     });
   } catch (err) {
     console.error(err);

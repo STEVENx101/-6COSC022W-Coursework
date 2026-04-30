@@ -227,7 +227,7 @@ function Bids() {
             </p>
             <ul style={{ fontSize: 12, color: "var(--text-muted)", paddingLeft: 16 }}>
               <li>Maximum bid: <strong>£{sponsorship.toFixed(2)}</strong> (your total sponsorship)</li>
-              <li>Only <strong>one active bid</strong> allowed per calendar month.</li>
+              <li>Only <strong>one active bid</strong> allowed per calendar day.</li>
               <li>Bids cannot be decreased once placed.</li>
             </ul>
           </div>
