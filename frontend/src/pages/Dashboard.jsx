@@ -4,7 +4,7 @@ import API from "../api/api";
 import toast, { Toaster } from "react-hot-toast";
 import { 
   HiOutlineUsers, HiOutlineAcademicCap, HiOutlineBriefcase, 
-  HiOutlineCurrencyDollar, HiOutlineDownload, HiOutlineDocumentReport
+  HiOutlineCurrencyDollar, HiOutlineDownload
 } from "react-icons/hi";
 import { Bar, Doughnut, Pie, Line, Radar } from "react-chartjs-2";
 import {
@@ -28,7 +28,6 @@ function Dashboard() {
   const [overview, setOverview] = useState(null);
   const [data, setData] = useState({ certs: [], courses: [], degrees: [], employment: null, skills: null, trends: null, bids: null });
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
 
   // Filter State
   const [filters, setFilters] = useState({ degree: "", year: "", company: "", course: "" });
@@ -78,48 +77,6 @@ function Dashboard() {
     setFilters(empty);
     setAppliedFilters(empty);
   };
-
-  // --- Export Logic ---
-  async function generatePDFReport() {
-    setExporting(true);
-    try {
-      const { jsPDF } = await import("jspdf");
-      const autoTable = (await import("jspdf-autotable")).default;
-      const doc = new jsPDF();
-      doc.setFontSize(22); doc.text("University Intelligence Report", 14, 22);
-      doc.setFontSize(10); doc.setTextColor(100); doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
-      
-      autoTable(doc, {
-        startY: 40,
-        head: [["Metric", "Value"]],
-        body: [
-          ["Total Alumni", overview?.totalAlumni],
-          ["Verified Alumni", overview?.verifiedAlumni],
-          ["Total Certifications", overview?.totalCertifications],
-          ["Market Bids", overview?.totalBids]
-        ],
-        theme: "striped", headStyles: { fillColor: [59, 130, 246] }
-      });
-      doc.save(`intelligence_report_${Date.now()}.pdf`);
-      toast.success("Intelligence PDF Generated");
-    } catch (err) { toast.error("PDF generation failed"); }
-    finally { setExporting(false); }
-  }
-
-  async function exportCSV() {
-    try {
-      const csv = "Metric,Value\n" + [
-        `Total Alumni,${overview?.totalAlumni}`,
-        `Verified Alumni,${overview?.verifiedAlumni}`,
-        `Certifications,${overview?.totalCertifications}`,
-        `Market Bids,${overview?.totalBids}`
-      ].join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a"); link.href = url; link.download = `data_export_${Date.now()}.csv`; link.click();
-      toast.success("CSV Exported");
-    } catch (err) { toast.error("CSV export failed"); }
-  }
 
   async function captureChart(selector, name) {
     try {
@@ -185,12 +142,6 @@ function Dashboard() {
         <div className="controls-left">
           <h2 className="section-title">System Intelligence</h2>
           <p className="section-subtitle">Real-time analytical insights synchronized from alumni databases.</p>
-        </div>
-        <div className="controls-right">
-          <button className="btn-secondary" onClick={exportCSV}><HiOutlineDocumentReport /> CSV</button>
-          <button className="btn-primary" onClick={generatePDFReport} disabled={exporting}>
-            {exporting ? "Generating..." : <><HiOutlineDownload /> Report</>}
-          </button>
         </div>
       </div>
 

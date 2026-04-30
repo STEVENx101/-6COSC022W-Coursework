@@ -1,6 +1,6 @@
 const cron = require("node-cron");
 const { Op } = require("sequelize");
-const { Bid, InfluencerDay, User, Profile } = require("../models");
+const { Bid, InfluencerDay, User, Profile, Certification, Course, Licence } = require("../models");
 const sendEmail = require("../utils/sendEmail");
 
 function getTodayDate() {
@@ -11,6 +11,46 @@ function getTomorrowDate() {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   return tomorrow.toISOString().split("T")[0];
+}
+
+/**
+ * Deduct the winning bid amount from the user's sponsorship pool.
+ * Spreads the deduction across certifications, courses, and licences
+ * (largest sponsorship first) until the full amount is consumed.
+ */
+async function deductSponsorship(userId, bidAmount) {
+  let remaining = parseFloat(bidAmount);
+
+  // Gather all sponsored items, sorted by sponsorship_amount DESC
+  const certs = await Certification.findAll({
+    where: { user_id: userId, sponsorship_amount: { [Op.gt]: 0 } },
+    order: [["sponsorship_amount", "DESC"]]
+  });
+  const courses = await Course.findAll({
+    where: { user_id: userId, sponsorship_amount: { [Op.gt]: 0 } },
+    order: [["sponsorship_amount", "DESC"]]
+  });
+  const licences = await Licence.findAll({
+    where: { user_id: userId, sponsorship_amount: { [Op.gt]: 0 } },
+    order: [["sponsorship_amount", "DESC"]]
+  });
+
+  // Merge all items into one list sorted by amount DESC
+  const allItems = [...certs, ...courses, ...licences].sort(
+    (a, b) => parseFloat(b.sponsorship_amount) - parseFloat(a.sponsorship_amount)
+  );
+
+  for (const item of allItems) {
+    if (remaining <= 0) break;
+
+    const current = parseFloat(item.sponsorship_amount);
+    const deduction = Math.min(current, remaining);
+
+    await item.update({ sponsorship_amount: (current - deduction).toFixed(2) });
+    remaining -= deduction;
+  }
+
+  console.log(`Sponsorship deducted: £${bidAmount} from user ${userId}. Remainder: £${remaining.toFixed(2)}`);
 }
 
 
@@ -93,6 +133,14 @@ const selectWinner = async () => {
       status: "WON"
     });
 
+    // deduct winning bid amount from the winner's sponsorship pool
+    await deductSponsorship(selectedWinner.user_id, selectedWinner.bid_amount);
+
+    // Count total wins for this user (lifetime appearance count)
+    const totalWins = await InfluencerDay.count({
+      where: { user_id: selectedWinner.user_id }
+    });
+
     // create/update influencer of the day for tomorrow
     const existingInfluencer = await InfluencerDay.findOne({
       where: { active_date: tomorrow }
@@ -101,14 +149,14 @@ const selectWinner = async () => {
     if (existingInfluencer) {
       await existingInfluencer.update({
         user_id: selectedWinner.user_id,
-        appearance_count: 0,
+        appearance_count: totalWins + 1,
         is_active: true
       });
     } else {
       await InfluencerDay.create({
         user_id: selectedWinner.user_id,
         active_date: tomorrow,
-        appearance_count: 0,
+        appearance_count: totalWins + 1,
         is_active: true
       });
     }

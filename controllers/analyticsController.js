@@ -327,7 +327,7 @@ exports.getAlumniList = async (req, res) => {
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     const users = await User.findAndCountAll({
-      where: { verified: true },
+      where: { verified: true, role: "user" },
       attributes: ["id", "email", "created_at"],
       include: [{ model: Profile, attributes: ["full_name", "bio", "profile_image", "linkedin_url"], required: false }],
       limit: parseInt(limit),

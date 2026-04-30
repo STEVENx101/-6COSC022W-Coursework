@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { Bid, Certification, Course, Licence } = require("../models");
+const { Bid, Certification, Course, Licence, InfluencerDay } = require("../models");
 
 function getTomorrowDate() {
   const tomorrow = new Date();
@@ -142,12 +142,6 @@ exports.updateBid = async (req, res) => {
     }
 
     if (bid_amount !== undefined) {
-      if (Number(bid_amount) < Number(bid.bid_amount)) {
-        return res.status(400).json({
-          message: "Bid amount cannot be decreased"
-        });
-      }
-
       const totalSponsorship = await getTotalSponsorship(userId);
       if (Number(bid_amount) > totalSponsorship) {
         return res.status(400).json({
@@ -290,7 +284,23 @@ exports.getMyBidStatus = async (req, res) => {
       cancelled: bids.filter(b => b.cancelled).length
     };
 
-    res.json(summary);
+    // Get total wins (appearance count)
+    const totalWins = await InfluencerDay.count({
+      where: { user_id: req.user.id }
+    });
+
+    // Get monthly wins
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+    const monthlyWins = await InfluencerDay.count({
+      where: {
+        user_id: req.user.id,
+        active_date: { [Op.between]: [monthStart, monthEnd] }
+      }
+    });
+
+    res.json({ ...summary, totalWins, monthlyWins });
   } catch (err) {
     console.error(err);
     res.status(500).json({

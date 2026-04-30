@@ -3,14 +3,14 @@ import DashboardLayout from "../components/DashboardLayout";
 import API from "../api/api";
 import toast, { Toaster } from "react-hot-toast";
 import {
-  HiOutlineStar, HiOutlineEye, HiOutlineRefresh,
-  HiOutlineLightningBolt, HiOutlineUserCircle
+  HiOutlineStar, HiOutlineLightningBolt, HiOutlineUserCircle
 } from "react-icons/hi";
 
 function Influencer() {
   const [influencer, setInfluencer] = useState(null);
   const [noInfluencer, setNoInfluencer] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selecting, setSelecting] = useState(false);
 
   useEffect(() => { fetchToday(); }, []);
 
@@ -32,30 +32,6 @@ function Influencer() {
     }
   }
 
-
-  async function handleUpdateAppearance() {
-    if (!influencer?.user?.id) return;
-    try {
-      await API.put(`/influencer/update-appearance/${influencer.user.id}`);
-      toast.success("Appearance count incremented");
-      fetchToday();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Update failed");
-    }
-  }
-
-  async function handleResetAppearance() {
-    if (!influencer?.user?.id) return;
-    if (!confirm("Reset the appearance count to 0?")) return;
-    try {
-      await API.put(`/influencer/reset-appearance/${influencer.user.id}`);
-      toast.success("Appearance count reset");
-      fetchToday();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Reset failed");
-    }
-  }
-
   if (loading) {
     return (
       <DashboardLayout title="Influencer of the Day">
@@ -66,6 +42,7 @@ function Influencer() {
       </DashboardLayout>
     );
   }
+
 
   return (
     <DashboardLayout title="Influencer of the Day">
@@ -116,46 +93,47 @@ function Influencer() {
         </div>
       ) : null}
 
-      {/* Stats & Actions */}
-      <div className="grid-3" style={{ marginBottom: 24 }}>
-        {/* Appearance Count */}
-        <div className="glass-card fade-in">
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>
-            <HiOutlineEye style={{ color: "var(--accent-cyan)" }} /> Appearance Count
-          </div>
-          <div style={{ fontSize: 36, fontWeight: 800 }}>
-            {influencer?.appearance_count ?? 0}
-          </div>
-          <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 12 }}>
-            Times displayed today
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn-primary btn-sm" onClick={handleUpdateAppearance} disabled={!influencer}>
-              <HiOutlineEye /> Increment
-            </button>
-            <button className="btn-danger btn-sm" onClick={handleResetAppearance} disabled={!influencer}>
-              <HiOutlineRefresh /> Reset
-            </button>
-          </div>
+      {/* Test Winner Selection */}
+      <div className="glass-card fade-in" style={{ marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Manual Winner Selection</div>
+          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Trigger the scheduler to pick tomorrow's winner from today's bids.</div>
         </div>
+        <button
+          className="btn-primary"
+          disabled={selecting}
+          onClick={async () => {
+            setSelecting(true);
+            try {
+              const res = await API.post("/influencer/test-select-winner");
+              toast.success(res.data.message);
+              fetchToday();
+            } catch (err) {
+              toast.error(err.response?.data?.message || "Selection failed");
+            } finally {
+              setSelecting(false);
+            }
+          }}
+        >
+          <HiOutlineLightningBolt /> {selecting ? "Selecting..." : "Select Winner Now"}
+        </button>
+      </div>
 
-        {/* Active Date */}
-        <div className="glass-card fade-in">
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>
-            <HiOutlineStar style={{ color: "var(--accent-amber)" }} /> Active Date
-          </div>
-          <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
-            {influencer?.active_date || new Date().toISOString().split("T")[0]}
-          </div>
-          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-            Status: {influencer?.is_active ? (
-              <span className="badge badge-green">Active</span>
-            ) : (
-              <span className="badge badge-red">Inactive</span>
-            )}
-          </div>
+      {/* Stats */}
+      <div className="glass-card fade-in" style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>
+          <HiOutlineStar style={{ color: "var(--accent-amber)" }} /> Active Date
         </div>
-
+        <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
+          {influencer?.active_date || new Date().toISOString().split("T")[0]}
+        </div>
+        <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+          Status: {influencer?.is_active ? (
+            <span className="badge badge-green">Active</span>
+          ) : (
+            <span className="badge badge-red">Inactive</span>
+          )}
+        </div>
       </div>
 
       {/* Info Box */}
@@ -167,8 +145,8 @@ function Influencer() {
             <p>Alumni who win the daily bid are featured as the influencer of the day. Their profile is showcased prominently on the platform.</p>
           </div>
           <div>
-            <strong style={{ color: "var(--text-primary)" }}>📊 Tracking</strong>
-            <p>The appearance count tracks how many times the influencer's profile has been viewed. It can be incremented and reset as needed.</p>
+            <strong style={{ color: "var(--text-primary)" }}>💰 Sponsorship</strong>
+            <p>When a bid is won, the winning amount is deducted from the alumni's sponsorship pool across their certifications and courses.</p>
           </div>
         </div>
       </div>

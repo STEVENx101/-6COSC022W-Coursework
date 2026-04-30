@@ -5,7 +5,7 @@ import toast, { Toaster } from "react-hot-toast";
 import {
   HiOutlineCurrencyDollar, HiOutlineClock, HiOutlineCheckCircle,
   HiOutlineXCircle, HiOutlineBan, HiOutlinePlus, HiOutlinePencil,
-  HiOutlineCalendar, HiOutlineTrendingUp
+  HiOutlineCalendar, HiOutlineTrendingUp, HiOutlineStar
 } from "react-icons/hi";
 
 function Bids() {
@@ -117,7 +117,7 @@ function Bids() {
   if (loading) {
     return (
       <DashboardLayout title="Bidding">
-        <div className="grid-4" style={{ marginBottom: 24 }}>
+        <div className="grid-3" style={{ marginBottom: 24 }}>
           {[1, 2, 3, 4].map(i => <div key={i} className="skeleton" style={{ height: 120 }} />)}
         </div>
         <div className="skeleton" style={{ height: 400 }} />
@@ -130,6 +130,7 @@ function Bids() {
     { label: "Pending", value: status.pending, icon: HiOutlineClock, color: "#f59e0b", bg: "rgba(245,158,11,0.15)" },
     { label: "Won", value: status.won, icon: HiOutlineCheckCircle, color: "#10b981", bg: "rgba(16,185,129,0.15)" },
     { label: "Lost", value: status.lost, icon: HiOutlineXCircle, color: "#ef4444", bg: "rgba(239,68,68,0.15)" },
+    { label: "Total Wins", value: status.totalWins ?? 0, icon: HiOutlineStar, color: "#eab308", bg: "rgba(234,179,8,0.15)" },
   ] : [];
 
   return (
@@ -137,7 +138,7 @@ function Bids() {
       <Toaster position="top-right" toastOptions={{ className: "toast-custom" }} />
 
       {/* Status Cards */}
-      <div className="grid-4" style={{ marginBottom: 24 }}>
+      <div className="grid-3" style={{ marginBottom: 24 }}>
         {statCards.map((card, i) => (
           <div key={i} className="stat-card fade-in" style={{ animationDelay: `${i * 0.1}s` }}>
             <div className="stat-icon" style={{ background: card.bg, color: card.color }}>
@@ -228,7 +229,7 @@ function Bids() {
             <ul style={{ fontSize: 12, color: "var(--text-muted)", paddingLeft: 16 }}>
               <li>Maximum bid: <strong>£{sponsorship.toFixed(2)}</strong> (your total sponsorship)</li>
               <li>Only <strong>one active bid</strong> allowed per calendar day.</li>
-              <li>Bids cannot be decreased once placed.</li>
+              <li>Bids can be increased or decreased while pending.</li>
             </ul>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginTop: 12 }}>
@@ -292,7 +293,7 @@ function Bids() {
                         <td colSpan={5} style={{ background: "var(--bg-card)", padding: 16 }}>
                           <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                             <div className="form-group" style={{ marginBottom: 0, flex: 1 }}>
-                              <label className="form-label">New Amount (must be ≥ current)</label>
+                              <label className="form-label">New Amount</label>
                               <input className="form-input" type="number" step="0.01" value={editForm.bid_amount} onChange={e => setEditForm({ ...editForm, bid_amount: e.target.value })} />
                             </div>
                             <button className="btn-primary btn-sm" onClick={() => handleUpdate(bid.id)}>Update</button>

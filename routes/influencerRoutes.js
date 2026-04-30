@@ -95,4 +95,27 @@ router.put("/update-appearance/:userId", authMiddleware, updateAppearanceCount);
  */
 router.put("/reset-appearance/:userId", authMiddleware, resetAppearanceCount);
 
+/**
+ * @swagger
+ * /api/influencer/test-select-winner:
+ *   post:
+ *     summary: Manually trigger winner selection (testing)
+ *     tags: [Influencer]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Winner selection executed
+ */
+router.post("/test-select-winner", authMiddleware, async (req, res) => {
+  try {
+    const selectWinner = require("../utils/winnerScheduler");
+    await selectWinner();
+    res.json({ message: "Winner selection executed successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Winner selection failed", error: err.message });
+  }
+});
+
 module.exports = router;

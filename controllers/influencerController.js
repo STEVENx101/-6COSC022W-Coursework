@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const { InfluencerDay, User, Profile } = require("../models");
 
 function getTodayDate() {
@@ -16,7 +17,7 @@ exports.getInfluencerOfTheDay = async (req, res) => {
       include: [
         {
           model: User,
-          attributes: ["id", "email"]
+          attributes: ["id", "email", "attended_event"]
         }
       ]
     });
@@ -31,12 +32,28 @@ exports.getInfluencerOfTheDay = async (req, res) => {
       where: { user_id: influencer.user_id }
     });
 
+    // Calculate monthly win count for this user
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+
+    const monthlyWins = await InfluencerDay.count({
+      where: {
+        user_id: influencer.user_id,
+        active_date: { [Op.between]: [monthStart, monthEnd] }
+      }
+    });
+
+    const maxWins = influencer.User?.attended_event ? 4 : 3;
+
     res.json({
       active_date: influencer.active_date,
       appearance_count: influencer.appearance_count,
       is_active: influencer.is_active,
       user: influencer.User,
-      profile
+      profile,
+      monthlyWins,
+      maxWins
     });
   } catch (err) {
     console.error(err);
